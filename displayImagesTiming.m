@@ -8,7 +8,7 @@
 % Dependency alert: Make sure the alert function and the relevant audio
 % files are present in the same folder as the conditions file.
 
-hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);');
+hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);'); % stop the task immediately if x is pressed
 set_bgcolor([0.5 0.5 0.5]);                                         % sets subject screen background color to Gray
 editable('pulseDuration','stimulus_duration','fix_radius');         % adds the variables on the Control screen to make on the fly changes
 
@@ -38,19 +38,19 @@ hold_radius = fix_radius ;
 
 sndTrialStart = AudioSound(null_);
 sndTrialStart.List = 'trialStart.wav';   % wav file
-sndTrialStart.PlayPosition = 0;    % play from 1 sec
+sndTrialStart.PlayPosition = 0;    % play from 0 sec
 sceneStart = create_scene(sndTrialStart);
 
 % scene 0.1
 sndAquireStart = AudioSound(null_);
 sndAquireStart.List = 'acquireStart.wav';   % wav file
-sndAquireStart.PlayPosition = 0;    % play from 1 sec
+sndAquireStart.PlayPosition = 0;    % play from 0 sec
 sceneAcquire = create_scene(sndAquireStart,fixation_point);
 
 % scene 1: fixation
 fix1 = SingleTarget(tracker);  % We use eye signals (eye_) for tracking. The SingleTarget adapter
-fix1.Target = fixation_point;  %    examines if the gaze is in the Threshold window around the Target.
-fix1.Threshold = fix_radius;   % The Target can be either TaskObject# or [x y] (in degrees).
+fix1.Target = fixation_point;  % The Target can be either TaskObject# or [x y] (in degrees).
+fix1.Threshold = fix_radius;   % Examines if the gaze is in the Threshold window around the Target.
 
 wth1 = WaitThenHold(fix1);     % The WaitThenHold adapter waits for WaitTime until the fixation
 wth1.WaitTime = wait_for_fix;  %    is acquired and then checks whether the fixation is held for HoldTime.
@@ -60,7 +60,7 @@ wth1.HoldTime = initial_fix;   % Since WaitThenHold gets the fixation status fro
 scene1 = create_scene(wth1,fixation_point);  % In this scene, we will present the fixation_point (TaskObject #1)
 % and wait for fixation.
 
-% scene 2: sample [A full scne consist of 1.acquire, 2. sound and then 3. stimulus]
+% scene 2: sample [A full scene consist of 1.acquire, 2. sound and then 3. stimulus]
 fix2 = SingleTarget(tracker);
 fix2.Target = stimulus;
 fix2.Threshold = hold_radius;
