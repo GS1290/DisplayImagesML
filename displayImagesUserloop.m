@@ -101,14 +101,19 @@ if isempty(timing_filename_returned)
     return
 end
 
-% constants
-imageDir = dir('Images');
-filename = {imageDir.name};
-image_list = filename(contains(filename, '.tif'));
-numImg = length(image_list);
+% load tif files from the Images folder (only once)
+persistent image_list
+persistent numImg
+if 0==TrialRecord.CurrentTrialNumber
+    imageDir = dir('Images');
+    filename = {imageDir.name};
+    image_list = filename(contains(filename, '.tif'));
+    numImg = length(image_list);
+end
+
 
 block = TrialRecord.CurrentBlock;
-chosen_configuration = TrialRecord.CurrentCondition;
+condition = TrialRecord.CurrentCondition;
 
 % Set a new condition if this is the first trial or the last trial was
 % answered correctly. If the last trial failed, then the inside of the IF
@@ -123,16 +128,14 @@ if isempty(TrialRecord.TrialErrors) || 0==TrialRecord.TrialErrors(end)
     % Select the next condition randomly
     condition_index = mod(correct_trial_count,numImg) + 1;
     if 1==condition_index, condition_sequence = randperm(numImg); end
-    chosen_configuration = condition_sequence(condition_index);
+    condition = condition_sequence(condition_index);
 end
 
-% configuration_index = (block-1)*4 + condition;
-% chosen_configuration = configuration(configuration_index,:);
 
 % Set the stimuli
-stimuli1 = fullfile('Images', image_list{chosen_configuration});
-stimuli2 = fullfile('Images', image_list{chosen_configuration});
-stimuli3 = fullfile('Images', image_list{chosen_configuration});
+stimuli1 = fullfile('Images', image_list{condition});
+stimuli2 = fullfile('Images', image_list{condition});
+stimuli3 = fullfile('Images', image_list{condition});
 
 C = { 'fix(0,0)', ...
     sprintf('pic(%s,0,0)',stimuli1), ...
@@ -146,4 +149,4 @@ C = { 'fix(0,0)', ...
 % However, if TrialRecord.NextBlock is -1, the task ends immediately
 % without running the next trial.
 TrialRecord.NextBlock = block;
-TrialRecord.NextCondition = chosen_configuration;
+TrialRecord.NextCondition = condition;
