@@ -10,7 +10,7 @@
 
 hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);'); % stop the task immediately if x is pressed
 set_bgcolor([0.5 0.5 0.5]);                                         % sets subject screen background color to Gray
-editable('pulseDuration','stimulus_duration','fix_radius');         % adds the variables on the Control screen to make on the fly changes
+editable('pulseDuration','fix_radius');         % adds the variables on the Control screen to make on the fly changes
 
 
 % Task Mode
@@ -21,12 +21,15 @@ end
 
 % Mapping to the TaskObjects defined in the conditions file
 fixation_point = 1;
-stimulus = 2;
+stimulus1 = 2;
+stimulus2 = 3;
+stimulus3 = 4;
 
 % time intervals (in ms):
 wait_for_fix = 1000;
 initial_fix = 1000;
-stimulus_duration = 3000;
+stimulus_duration = 800;
+isi_duration = 700;
 pulseDuration = 50;
 
 % fixation window (in degrees):
@@ -62,12 +65,39 @@ scene1 = create_scene(wth1,fixation_point);  % In this scene, we will present th
 
 % scene 2: sample [A full scene consist of 1.acquire, 2. sound and then 3. stimulus]
 fix2 = SingleTarget(tracker);
-fix2.Target = stimulus;
+fix2.Target = stimulus1;
 fix2.Threshold = hold_radius;
 wth2 = WaitThenHold(fix2);
 wth2.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
 wth2.HoldTime = stimulus_duration;
-sceneStimulus = create_scene(wth2,[fixation_point stimulus]);
+sceneStimulus1 = create_scene(wth2,[fixation_point stimulus1]);
+
+% scene 3: sample [A full scene consist of 1.acquire, 2. sound and then 3. stimulus]
+fix3 = SingleTarget(tracker);
+fix3.Target = stimulus2;
+fix3.Threshold = hold_radius;
+wth3 = WaitThenHold(fix3);
+wth3.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
+wth3.HoldTime = stimulus_duration;
+sceneStimulus2 = create_scene(wth3,[fixation_point stimulus2]);
+
+% scene 4: sample [A full scene consist of 1.acquire, 2. sound and then 3. stimulus]
+fix4 = SingleTarget(tracker);
+fix4.Target = stimulus3;
+fix4.Threshold = hold_radius;
+wth4 = WaitThenHold(fix2);
+wth4.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
+wth4.HoldTime = stimulus_duration;
+sceneStimulus3 = create_scene(wth4,[fixation_point stimulus3]);
+
+% scene 5: ISI
+fix5 = SingleTarget(tracker);
+fix5.Target = fixation_point;
+fix5.Threshold = hold_radius;
+wth5 = WaitThenHold(fix5);
+wth5.WaitTime = 0;
+wth5.HoldTime = isi_duration;
+sceneISI = create_scene(wth5, fixation_point);
 
 % TASK:
 error_type = 0;
@@ -85,8 +115,24 @@ end
 
 if 0==error_type
     run_scene(sceneAcquire);
-    run_scene(sceneStimulus,20);    % Run the second scene (eventmarker 20)
+    run_scene(sceneStimulus1,20);    % Run the second scene (eventmarker 20)
     if ~wth2.Success         % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+        error_type = 3;      % So it is a "break fixation (3)" error.
+    end
+end
+
+if 0==error_type
+    run_scene(sceneISI);
+    run_scene(sceneStimulus2,20);    % Run the second scene (eventmarker 20)
+    if ~wth3.Success         % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+        error_type = 3;      % So it is a "break fixation (3)" error.
+    end
+end
+
+if 0==error_type
+    run_scene(sceneISI);
+    run_scene(sceneStimulus3,20);    % Run the second scene (eventmarker 20)
+    if ~wth4.Success         % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
         error_type = 3;      % So it is a "break fixation (3)" error.
     end
 end

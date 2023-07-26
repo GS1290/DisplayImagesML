@@ -108,7 +108,7 @@ image_list = filename(contains(filename, '.tif'));
 numImg = length(image_list);
 
 block = TrialRecord.CurrentBlock;
-condition = TrialRecord.CurrentCondition;
+chosen_configuration = TrialRecord.CurrentCondition;
 
 % Set a new condition if this is the first trial or the last trial was
 % answered correctly. If the last trial failed, then the inside of the IF
@@ -123,17 +123,21 @@ if isempty(TrialRecord.TrialErrors) || 0==TrialRecord.TrialErrors(end)
     % Select the next condition randomly
     condition_index = mod(correct_trial_count,numImg) + 1;
     if 1==condition_index, condition_sequence = randperm(numImg); end
-    condition = condition_sequence(condition_index);
+    chosen_configuration = condition_sequence(condition_index);
 end
 
 % configuration_index = (block-1)*4 + condition;
 % chosen_configuration = configuration(configuration_index,:);
 
 % Set the stimuli
-sample = fullfile('Images', image_list{condition});
+stimuli1 = fullfile('Images', image_list{chosen_configuration});
+stimuli2 = fullfile('Images', image_list{chosen_configuration});
+stimuli3 = fullfile('Images', image_list{chosen_configuration});
 
 C = { 'fix(0,0)', ...
-    sprintf('pic(%s,0,0)',sample)};
+    sprintf('pic(%s,0,0)',stimuli1), ...
+    sprintf('pic(%s,0,0)',stimuli2), ...
+    sprintf('pic(%s,0,0)',stimuli3)};
 
 % Set the block number and the condition number of the next trial. Since
 % this userloop function provides the list of TaskObjects and timingfile
@@ -142,4 +146,4 @@ C = { 'fix(0,0)', ...
 % However, if TrialRecord.NextBlock is -1, the task ends immediately
 % without running the next trial.
 TrialRecord.NextBlock = block;
-TrialRecord.NextCondition = condition;
+TrialRecord.NextCondition = chosen_configuration;
