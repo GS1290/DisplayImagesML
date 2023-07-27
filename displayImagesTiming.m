@@ -11,7 +11,8 @@
 hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);'); % stop the task immediately if x is pressed
 set_bgcolor([0.5 0.5 0.5]);                                         % sets subject screen background color to Gray
 editable('pulseDuration','fix_radius');         % adds the variables on the Control screen to make on the fly changes
-
+% Stimuli = TrialRecord.User.Stimuli;
+bhv_variable('Stimuli', TrialRecord.User.Stimuli);
 
 % Task Mode
 % detect an available tracker

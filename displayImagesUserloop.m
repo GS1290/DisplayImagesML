@@ -31,11 +31,6 @@ condition = TrialRecord.CurrentCondition;
 persistent borrow_conditions
 persistent condition_sequence
 persistent prev_conditions
-if isempty(condition_sequence)
-    condition_sequence = 1:numImg;
-    condition_sequence = setdiff(condition_sequence, borrow_conditions);
-    block = block + 1;
-end
 
 if isempty(TrialRecord.TrialErrors)
     condition = condition+1;
@@ -45,16 +40,26 @@ elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end)
     condition = condition+3;
 end
 
+if isempty(condition_sequence)
+    condition_sequence = 1:numImg;
+    condition_sequence = setdiff(condition_sequence, borrow_conditions);
+    borrow_conditions = [];
+    block = block + 1;
+end
+
+
 % If there are more than 2 conditions left to show in the current block,
 % sample 3 conditions
 if length(condition_sequence)>=3
     condition_indices = datasample(condition_sequence, 3, 'Replace',false);
     prev_conditions = condition_indices;
+    TrialRecord.User.Stimuli = condition_indices;
 else
     prev_conditions = condition_sequence;
     borrow_conditions = datasample(1:numImg, 3-length(condition_sequence), 'Replace', false);
     condition_indices = [condition_sequence borrow_conditions];
     condition_indices = condition_indices(randperm(3));
+    TrialRecord.User.Stimuli = condition_indices;
 end
 
 % Set the stimuli
