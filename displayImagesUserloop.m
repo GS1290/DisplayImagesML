@@ -5,9 +5,7 @@ C = [];
 timingfile = 'DisplayImagesTiming.m';
 userdefined_trialholder = '';
 
-% The very first call to this function is just to retrieve the timing
-% filename before the task begins and we don't want to waste our preset
-% values for this, so we just return if it is the first call.
+% Return timing file if it the very first call
 persistent timing_filename_returned
 if isempty(timing_filename_returned)
     timing_filename_returned = true;
@@ -16,12 +14,16 @@ end
 
 % load tif files from the Images folder (only once)
 persistent image_list
-persistent numImg
+persistent image_num
+persistent imageL
 if 0==TrialRecord.CurrentTrialNumber
     imageDir = dir('Images');
     filename = {imageDir.name};
     image_list = filename(contains(filename, '.tif'));
-    numImg = length(image_list);
+    image_num = cellfun(@(x) sscanf(x, 'Image%d.tif'), image_list);
+    [image_num, idxOrder] = sort(image_num);
+    image_list = image_list(idxOrder);
+    imageL = length(image_list);
 end
 
 block = TrialRecord.CurrentBlock;
@@ -37,11 +39,11 @@ if isempty(TrialRecord.TrialErrors)
 % If the last trial is a success, remove those conditions from the sequence
 elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end)
     condition_sequence = setdiff(condition_sequence, prev_conditions);
-    condition = condition+3;
+    condition = mod(condition+2, imageL)+1;
 end
 
 if isempty(condition_sequence)
-    condition_sequence = 1:numImg;
+    condition_sequence = 1:imageL;
     condition_sequence = setdiff(condition_sequence, borrow_conditions);
     borrow_conditions = [];
     block = block + 1;
@@ -56,7 +58,7 @@ if length(condition_sequence)>=3
     TrialRecord.User.Stimuli = condition_indices;
 else
     prev_conditions = condition_sequence;
-    borrow_conditions = datasample(1:numImg, 3-length(condition_sequence), 'Replace', false);
+    borrow_conditions = datasample(1:imageL, 3-length(condition_sequence), 'Replace', false);
     condition_indices = [condition_sequence borrow_conditions];
     condition_indices = condition_indices(randperm(3));
     TrialRecord.User.Stimuli = condition_indices;

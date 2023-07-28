@@ -11,7 +11,6 @@
 hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);'); % stop the task immediately if x is pressed
 set_bgcolor([0.5 0.5 0.5]);                                         % sets subject screen background color to Gray
 editable('pulseDuration','fix_radius');         % adds the variables on the Control screen to make on the fly changes
-% Stimuli = TrialRecord.User.Stimuli;
 bhv_variable('Stimuli', TrialRecord.User.Stimuli);
 
 % Task Mode
@@ -34,7 +33,7 @@ isi_duration = 700;
 pulseDuration = 50;
 
 % fixation window (in degrees):
-fix_radius = [4 4];
+fix_radius = [3 3];
 hold_radius = fix_radius ;
 
 % creating Scenes
