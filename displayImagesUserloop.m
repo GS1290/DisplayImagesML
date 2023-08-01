@@ -29,19 +29,20 @@ end
 block = TrialRecord.CurrentBlock;
 condition = TrialRecord.CurrentCondition;
 
-% Initialize the number of conditions for a block
 persistent borrow_conditions
 persistent condition_sequence
 persistent prev_conditions
 
+% If its the first trial, set the condition # to 1
 if isempty(TrialRecord.TrialErrors)
-    condition = condition+1;
-% If the last trial is a success, remove those conditions from the sequence
+    condition = 1;
+% If the last trial is a success, remove prev conditions from the sequence
 elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end)
     condition_sequence = setdiff(condition_sequence, prev_conditions);
     condition = mod(condition+2, imageL)+1;
 end
 
+% Initialize the conditions for a new block
 if isempty(condition_sequence)
     condition_sequence = 1:imageL;
     condition_sequence = setdiff(condition_sequence, borrow_conditions);
