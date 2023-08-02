@@ -58,6 +58,7 @@ fix1.Threshold = fix_radius;   % Examines if the gaze is in the Threshold window
 wth1 = WaitThenHold(fix1);     % The WaitThenHold adapter waits for WaitTime until the fixation
 wth1.WaitTime = wait_for_fix;  %    is acquired and then checks whether the fixation is held for HoldTime.
 wth1.HoldTime = initial_fix;   % Since WaitThenHold gets the fixation status from SingleTarget,
+wth1.AllowEarlyFix = false;    % End the scene if the monkey is fixating before the scene starts
 % SingleTarget (fix1) must be the input argument of WaitThenHold (wth1).
 
 con1 = Concurrent(wth1);
