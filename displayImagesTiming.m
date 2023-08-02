@@ -128,7 +128,7 @@ if 0==error_type
 end
 
 if 0==error_type
-    run_scene(sceneISI);
+    run_scene(sceneISI,10);
     run_scene(sceneStimulus2,20);    % Run the second scene (eventmarker 20)
     if ~wth3.Success         % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
         error_type = 3;      % So it is a "break fixation (3)" error.
@@ -136,7 +136,7 @@ if 0==error_type
 end
 
 if 0==error_type
-    run_scene(sceneISI);
+    run_scene(sceneISI,10);
     run_scene(sceneStimulus3,20);    % Run the second scene (eventmarker 20)
     if ~wth4.Success         % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
         error_type = 3;      % So it is a "break fixation (3)" error.
