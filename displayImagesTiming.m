@@ -42,13 +42,13 @@ hold_radius = fix_radius ;
 sndTrialStart = AudioSound(null_);
 sndTrialStart.List = 'trialStart.wav';   % wav file
 sndTrialStart.PlayPosition = 0;    % play from 0 sec
-sceneStart = create_scene(sndTrialStart);
+% sceneStart = create_scene(sndTrialStart);
 
 % scene 0.1
 sndAquireStart = AudioSound(null_);
 sndAquireStart.List = 'acquireStart.wav';   % wav file
 sndAquireStart.PlayPosition = 0;    % play from 0 sec
-sceneAcquire = create_scene(sndAquireStart,fixation_point);
+% sceneAcquire = create_scene(sndAquireStart,fixation_point);
 
 % scene 1: fixation
 fix1 = SingleTarget(tracker);  % We use eye signals (eye_) for tracking. The SingleTarget adapter
@@ -60,7 +60,10 @@ wth1.WaitTime = wait_for_fix;  %    is acquired and then checks whether the fixa
 wth1.HoldTime = initial_fix;   % Since WaitThenHold gets the fixation status from SingleTarget,
 % SingleTarget (fix1) must be the input argument of WaitThenHold (wth1).
 
-scene1 = create_scene(wth1,fixation_point);  % In this scene, we will present the fixation_point (TaskObject #1)
+con1 = Concurrent(wth1);
+con1.add(sndTrialStart);
+
+scene1 = create_scene(con1,fixation_point);  % In this scene, we will present the fixation_point (TaskObject #1)
 % and wait for fixation.
 
 % scene 2: sample [A full scene consist of 1.acquire, 2. sound and then 3. stimulus]
@@ -70,7 +73,10 @@ fix2.Threshold = hold_radius;
 wth2 = WaitThenHold(fix2);
 wth2.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
 wth2.HoldTime = stimulus_duration;
-sceneStimulus1 = create_scene(wth2,[fixation_point stimulus1]);
+
+con2 = Concurrent(wth2);
+con2.add(sndAquireStart);
+sceneStimulus1 = create_scene(con2,[fixation_point stimulus1]);
 
 % scene 3: sample [A full scene consist of 1.acquire, 2. sound and then 3. stimulus]
 fix3 = SingleTarget(tracker);
@@ -102,7 +108,7 @@ sceneISI = create_scene(wth5, fixation_point);
 % TASK:
 error_type = 0;
 
-run_scene(sceneStart);
+% run_scene(sceneStart);
 
 run_scene(scene1,10);        % Run the first scene (eventmaker 10)
 if ~wth1.Success             % If the WithThenHold failed (either fixation is not acquired or broken during hold),
@@ -114,7 +120,7 @@ if ~wth1.Success             % If the WithThenHold failed (either fixation is no
 end
 
 if 0==error_type
-    run_scene(sceneAcquire);
+    % run_scene(sceneAcquire);
     run_scene(sceneStimulus1,20);    % Run the second scene (eventmarker 20)
     if ~wth2.Success         % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
         error_type = 3;      % So it is a "break fixation (3)" error.
