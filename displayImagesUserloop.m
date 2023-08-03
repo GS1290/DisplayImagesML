@@ -5,18 +5,12 @@ C = [];
 timingfile = 'DisplayImagesTiming.m';
 userdefined_trialholder = '';
 
-% Return timing file if it the very first call
+% Load the image stimuli and return timing file if it the very first call
 persistent timing_filename_returned
-if isempty(timing_filename_returned)
-    timing_filename_returned = true;
-    return
-end
-
-% load tif files from the Images folder (only once)
 persistent image_list
 persistent image_num
 persistent imageL
-if 0==TrialRecord.CurrentTrialNumber
+if isempty(timing_filename_returned)
     imageDir = dir('Images');
     filename = {imageDir.name};
     image_list = filename(contains(filename, '.tif'));
@@ -24,6 +18,8 @@ if 0==TrialRecord.CurrentTrialNumber
     [image_num, idxOrder] = sort(image_num);
     image_list = image_list(idxOrder);
     imageL = length(image_list);
+    timing_filename_returned = true;
+    return
 end
 
 block = TrialRecord.CurrentBlock;
