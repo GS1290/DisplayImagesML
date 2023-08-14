@@ -1,19 +1,19 @@
-% DisplayImagesTiming file
+% displayImagesTiming file
 
 % Note:
 % Using the scene based framework to display the stimuli. If this
 % does not work on your PC, please update the Monkeylogic.
-% Tested on MonkeyLogic Version 2.2.32 (Jan7, 2023)
+% Tested on MonkeyLogic Version 2.2.37 (Jun 15, 2023)
 
 % Dependency alert: Make sure the alert function and the relevant audio
 % files are present in the same folder as the conditions file.
 
-hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);'); % stop the task immediately if x is pressed
-set_bgcolor([0.5 0.5 0.5]);                                         % sets subject screen background color to Gray
-editable('pulseDuration','fix_radius');         % adds the variables on the Control screen to make on the fly changes
-bhv_variable('Stimuli', TrialRecord.User.Stimuli);
+hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);');  % stop the task immediately if x is pressed
+set_bgcolor([0.5 0.5 0.5]);                                                 % sets subject screen background color to Gray
+editable('pulse_duration','fix_radius');                                    % adds the variables on the Control screen to make on-the-fly changes
+bhv_variable('Stimuli', TrialRecord.User.Stimuli);                          % Save the stimuli shown in data.UserVars variable
 
-% Task Mode
+% Initializing task variables
 % detect an available tracker
 if exist('eye_','var'), tracker = eye_;
 else, error('This task requires eye input. Please set it up or turn on the simulation mode.');
@@ -30,7 +30,7 @@ wait_for_fix = 1000;
 initial_fix = 1000;
 stimulus_duration = 800;
 isi_duration = 700;
-pulseDuration = 50;
+pulse_duration = 50;
 
 % fixation window (in degrees):
 fix_radius = [3 3];
@@ -164,7 +164,7 @@ end
 % reward
 if 0==error_type
     idle(0);                % Clear screens
-    goodmonkey(pulseDuration, 'juiceline',1, 'numreward',1, 'pausetime',0, 'eventmarker',50);   % used-defined amount of juice
+    goodmonkey(pulse_duration, 'juiceline',1, 'numreward',1, 'pausetime',0, 'eventmarker',50);   % used-defined amount of juice
 else
     idle(700);              % Clear screens
 end

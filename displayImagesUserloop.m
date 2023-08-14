@@ -22,6 +22,7 @@ if isempty(timing_filename_returned)
     return
 end
 
+% get current block and current condition
 block = TrialRecord.CurrentBlock;
 condition = TrialRecord.CurrentCondition;
 
@@ -29,13 +30,11 @@ persistent borrow_conditions
 persistent condition_sequence
 persistent prev_conditions
 
-% If its the first trial, set the condition # to 1
-if isempty(TrialRecord.TrialErrors)
-    condition = 1;
-% If the last trial is a success, remove prev conditions from the sequence
-elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end)
-    condition_sequence = setdiff(condition_sequence, prev_conditions);
-    condition = mod(condition+2, imageL)+1;
+if isempty(TrialRecord.TrialErrors)     % If its the first trial
+    condition = 1;                      % set the condition # to 1
+elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end) % If the last trial is a success
+    condition_sequence = setdiff(condition_sequence, prev_conditions);      % remove the previously presented conditions from the sequence
+    condition = mod(condition+2, imageL)+1;                                 % increment the condition # by 3
 end
 
 % Initialize the conditions for a new block
@@ -46,13 +45,10 @@ if isempty(condition_sequence)
     block = block + 1;
 end
 
-
-% If there are more than 2 conditions left to show in the current block,
-% sample 3 conditions
-if length(condition_sequence)>=3
-    condition_indices = datasample(condition_sequence, 3, 'Replace',false);
-    prev_conditions = condition_indices;
-    TrialRecord.User.Stimuli = condition_indices;
+if length(condition_sequence)>=3                                            % If more than 2 conditions left in the sequence
+    condition_indices = datasample(condition_sequence, 3, 'Replace',false); % randomly sample 3 condtions from the sequence
+    prev_conditions = condition_indices;                                    
+    TrialRecord.User.Stimuli = condition_indices;                           % save the conditions in user variable
 else
     prev_conditions = condition_sequence;
     borrow_conditions = datasample(1:imageL, 3-length(condition_sequence), 'Replace', false);
@@ -71,11 +67,6 @@ C = { 'fix(0,0)', ...
     sprintf('pic(%s,0,0)',stimuli2), ...
     sprintf('pic(%s,0,0)',stimuli3)};
 
-% Set the block number and the condition number of the next trial. Since
-% this userloop function provides the list of TaskObjects and timingfile
-% names, ML does not need the block/condition number. They are just for
-% your reference.
-% However, if TrialRecord.NextBlock is -1, the task ends immediately
-% without running the next trial.
+% Set the block number and the condition number of the next trial
 TrialRecord.NextBlock = block;
 TrialRecord.NextCondition = condition;
