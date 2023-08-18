@@ -114,60 +114,33 @@ sceneISI = create_scene(wth6, fixation_point);
 % TASK:
 error_type = 0;
 
-run_scene(scene1);          % Run the first scene (eventmaker 10)
-if ~wth1.Success            % If the WithThenHold failed (fixation is not acquired)
-    error_type = 4;         % If so, fixation was never made and therefore this is a "no fixation (4)" error.
-end
-
-if 0==error_type
+while true
+    run_scene(scene1);                              % Run the first scene (eventmaker 10)
+    if ~wth1.Success; error_type = 4; break; end    % If the WithThenHold failed (fixation is not acquired), fixation was never made and therefore this is a "no fixation (4)" error.
+    
     run_scene(scene2,10);
-    if ~wth2.Success        % If the WithThenHold failed (fixation is broken)
-        error_type = 3;     % If so this is a "break fixation (3)" error.
-    end                      
-end
-
-if 0==error_type
-    run_scene(sceneStimulus1,20);   % Run the scene for presenting 1st stimulus (eventmarker 20)
-    if ~wth3.Success                % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
-        error_type = 3;             % So it is a "break fixation (3)" error.
-    end
-end
-
-if 0==error_type
+    if ~wth2.Success; error_type = 3; break; end    % If the WithThenHold failed (fixation is broken), this is a "break fixation (3)" error.
+    
+    run_scene(sceneStimulus1,20);                   % Run the scene for presenting 1st stimulus (eventmarker 20)
+    if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+    
     run_scene(sceneISI,10);
-    if ~wth6.Success
-        error_type = 3;
-    end
-end
-
-if 0==error_type
-    run_scene(sceneStimulus2,20);   % Run the scene for presenting 2nd stimulus (eventmarker 20)
-    if ~wth4.Success                % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
-        error_type = 3;             % So it is a "break fixation (3)" error.
-    end
-end
-
-if 0==error_type
+    if ~wth6.Success; error_type = 3; break; end
+    
+    run_scene(sceneStimulus2,20);                   % Run the scene for presenting 2nd stimulus (eventmarker 20)
+    if ~wth4.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+    
     run_scene(sceneISI,10);
-    if ~wth6.Success
-        error_type = 3;
-    end
-end
-
-if 0==error_type
-    run_scene(sceneStimulus3,20);   % % Run the scene for presenting 3rd stimulus (eventmarker 20)
-    if ~wth5.Success                % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
-        error_type = 3;             % So it is a "break fixation (3)" error.
-    end
-end
-
-% reward
-if 0==error_type
-    idle(0);                % Clear screens
+    if ~wth6.Success; error_type = 3; break; end
+    
+    run_scene(sceneStimulus3,20);                   % Run the scene for presenting 3rd stimulus (eventmarker 20)
+    if ~wth5.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+    
+    idle(0);                                        % Clear screens
     goodmonkey(pulse_duration, 'juiceline',1, 'numreward',1, 'pausetime',0, 'eventmarker',50);   % used-defined amount of juice
-else
-    idle(700);              % Clear screens
+    break
 end
 
+if 0~=error_type; idle(700); end
 trialerror(error_type);     % Add the result to the trial history
 set_iti(1000);
