@@ -1,29 +1,19 @@
 % displayImagesTiming file
-
-% Note:
-% Using the scene based framework to display the stimuli. If this
-% does not work on your PC, please update the Monkeylogic.
-% Tested on MonkeyLogic Version 2.2.37 (Jun 15, 2023)
-
-% Dependency alert: Make sure the alert function and the relevant audio
-% files are present in the same folder as the conditions file.
-
 hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);');  % stop the task immediately if x is pressed
 set_bgcolor([0.5 0.5 0.5]);                                                 % sets subject screen background color to Gray
 editable('pulse_duration','fix_radius');                                    % adds the variables on the Control screen to make on-the-fly changes
-bhv_variable('Stimuli', TrialRecord.User.Stimuli);                          % Save the stimuli shown in data.UserVars variable
+bhv_variable('Stimuli', TrialRecord.User.Stimuli);                          % Save the current stimuli in data.UserVars variable
 
 % Initializing task variables
-% detect an available tracker
-if exist('eye_','var'), tracker = eye_;
+if exist('eye_','var'), tracker = eye_;     % detect an available tracker
 else, error('This task requires eye input. Please set it up or turn on the simulation mode.');
 end
 
 % Mapping to the TaskObjects defined in the conditions file
 fixation_point = 1;
-stimulus1 = 2;
-stimulus2 = 3;
-stimulus3 = 4;
+stim1 = 2;
+stim2 = 3;
+stim3 = 4;
 
 % time intervals (in ms):
 wait_for_fix = 1000;
@@ -47,21 +37,21 @@ sndAquireStart = AudioSound(null_);
 sndAquireStart.List = 'acquireStart.wav';   % wav file
 sndAquireStart.PlayPosition = 0;            % play from 0 sec
 
-% scene 1: wait for fixation
+% sceneFix: wait for fixation
 fix1 = SingleTarget(tracker);   % We use eye signals (eye_) for tracking. The SingleTarget adapter
 fix1.Target = fixation_point;   % Set fixation point as the target
 fix1.Threshold = fix_radius;    % Examines if the gaze is in the Threshold window around the Target.
 wth1 = WaitThenHold(fix1);      % 
 wth1.WaitTime = wait_for_fix;   % 
-wth1.HoldTime = 1;              %
+wth1.HoldTime = 0;              %
 wth1.AllowEarlyFix = false;     % End the scene if the monkey is fixating before the scene starts
 con1 = Concurrent(wth1);        %
 con1.add(sndTrialStart);        % Start the trial and concurrently play the trialStart audio
 
-scene1 = create_scene(con1,fixation_point);     % In this scene, we will present the fixation_point (TaskObject #1)
+sceneFix = create_scene(con1,fixation_point);   % In this scene, we will present the fixation_point (TaskObject #1)
                                                 % and wait for fixation.
 
-% scene 2: hold fixation
+% sceneHold: hold fixation
 fix2 = SingleTarget(tracker);   % We use eye signals (eye_) for tracking. The SingleTarget adapter
 fix2.Target = fixation_point;   % Set fixation point as the target
 fix2.Threshold = fix_radius;    % Examines if the gaze is in the Threshold window around the Target.
@@ -71,70 +61,53 @@ wth2.HoldTime = initial_fix;    %
 con2 = Concurrent(wth2);
 con2.add(sndAquireStart);
 
-scene2 = create_scene(con2,fixation_point);     % In this scene, we will present the fixation_point (TaskObject #1)
-                                                % and hold fixation for 1000ms.
+sceneHold = create_scene(con2,fixation_point);  % In this scene, we will present the fixation_point (TaskObject #1) and hold fixation for 1000ms.
 
-% scene 3: present stimulus 1
+% sceneStim: present stimulus
 fix3 = SingleTarget(tracker);
 fix3.Target = fixation_point;
 fix3.Threshold = hold_radius;
 wth3 = WaitThenHold(fix3);
-wth3.WaitTime = 0;              % We already knows the fixation is acquired, so we don't wait.
+wth3.WaitTime = 0;                              % We already knows the fixation is acquired, so we don't wait.
 wth3.HoldTime = stimulus_duration;
 
-sceneStimulus1 = create_scene(wth3,[fixation_point stimulus1]);
+sceneStim1 = create_scene(wth3,[fixation_point stim1]); % present stimulus 1
+sceneStim2 = create_scene(wth3,[fixation_point stim2]); % present stimulus 2
+sceneStim3 = create_scene(wth3,[fixation_point stim3]); % present stimulus 3
 
-% scene 4: present stimulus 2
+% sceneISI: hold fixation until next stimulus
 fix4 = SingleTarget(tracker);
 fix4.Target = fixation_point;
 fix4.Threshold = hold_radius;
 wth4 = WaitThenHold(fix4);
-wth4.WaitTime = 0;              % We already knows the fixation is acquired, so we don't wait.
-wth4.HoldTime = stimulus_duration;
-sceneStimulus2 = create_scene(wth4,[fixation_point stimulus2]);
-
-% scene 5: present stimulus 3
-fix5 = SingleTarget(tracker);
-fix5.Target = fixation_point;
-fix5.Threshold = hold_radius;
-wth5 = WaitThenHold(fix5);
-wth5.WaitTime = 0;             % We already knows the fixation is acquired, so we don't wait.
-wth5.HoldTime = stimulus_duration;
-sceneStimulus3 = create_scene(wth5,[fixation_point stimulus3]);
-
-% scene 6: ISI
-fix6 = SingleTarget(tracker);
-fix6.Target = fixation_point;
-fix6.Threshold = hold_radius;
-wth6 = WaitThenHold(fix6);
-wth6.WaitTime = 0;
-wth6.HoldTime = isi_duration;
-sceneISI = create_scene(wth6, fixation_point);
+wth4.WaitTime = 0;
+wth4.HoldTime = isi_duration;
+sceneISI = create_scene(wth4, fixation_point);
 
 % TASK:
 error_type = 0;
 
 while true
-    run_scene(scene1);                              % Run the first scene (eventmaker 10)
+    run_scene(sceneFix);                            % Run the first scene (eventmaker 10)
     if ~wth1.Success; error_type = 4; break; end    % If the WithThenHold failed (fixation is not acquired), fixation was never made and therefore this is a "no fixation (4)" error.
     
-    run_scene(scene2,10);
+    run_scene(sceneHold,10);
     if ~wth2.Success; error_type = 3; break; end    % If the WithThenHold failed (fixation is broken), this is a "break fixation (3)" error.
     
-    run_scene(sceneStimulus1,20);                   % Run the scene for presenting 1st stimulus (eventmarker 20)
+    run_scene(sceneStim1,20);                       % Run the scene for presenting 1st stimulus (eventmarker 20)
     if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
     
     run_scene(sceneISI,10);
-    if ~wth6.Success; error_type = 3; break; end
+    if ~wth4.Success; error_type = 3; break; end
     
-    run_scene(sceneStimulus2,20);                   % Run the scene for presenting 2nd stimulus (eventmarker 20)
-    if ~wth4.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+    run_scene(sceneStim2,20);                       % Run the scene for presenting 2nd stimulus (eventmarker 20)
+    if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
     
     run_scene(sceneISI,10);
-    if ~wth6.Success; error_type = 3; break; end
+    if ~wth4.Success; error_type = 3; break; end
     
-    run_scene(sceneStimulus3,20);                   % Run the scene for presenting 3rd stimulus (eventmarker 20)
-    if ~wth5.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+    run_scene(sceneStim3,20);                       % Run the scene for presenting 3rd stimulus (eventmarker 20)
+    if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
     
     idle(0);                                        % Clear screens
     goodmonkey(pulse_duration, 'juiceline',1, 'numreward',1, 'pausetime',0, 'eventmarker',50);   % used-defined amount of juice

@@ -1,23 +1,20 @@
 function [C,timingfile,userdefined_trialholder] = displayImagesUserloop(MLConfig,TrialRecord)
-
-% default return value
-C = [];
+% Userloop returns below three variables each trial to the timing script
+C = [];                 % default return value
 timingfile = 'DisplayImagesTiming.m';
 userdefined_trialholder = '';
 
 % Load the image stimuli and return timing file if it the very first call
 persistent timing_filename_returned
-persistent image_list
-persistent image_num
-persistent imageL
+persistent imageList
+persistent imageNum
 if isempty(timing_filename_returned)
-    imageDir = dir('Images');
+    imageDir = dir('Images');                                       % stimuli are kept in "Images/"
     filename = {imageDir.name};
-    image_list = filename(contains(filename, '.tif'));
-    image_num = cellfun(@(x) sscanf(x, 'Image%d.tif'), image_list);
-    [image_num, idxOrder] = sort(image_num);
-    image_list = image_list(idxOrder);
-    imageL = length(image_list);
+    imageList = filename(contains(filename, '.tif'));
+    imageNum = cellfun(@(x) sscanf(x, 'Image%d.tif'), imageList);
+    [imageNum, idxOrder] = sort(imageNum);
+    imageList = imageList(idxOrder);
     timing_filename_returned = true;
     return
 end
@@ -26,47 +23,46 @@ end
 block = TrialRecord.CurrentBlock;
 condition = TrialRecord.CurrentCondition;
 
-persistent borrow_conditions
-persistent condition_sequence
-persistent prev_conditions
+persistent stimList
+persistent stimPrev
+persistent stimBorrow
 
-if isempty(TrialRecord.TrialErrors)     % If its the first trial
-    condition = 1;                      % set the condition # to 1
+if isempty(TrialRecord.TrialErrors)                                         % If its the first trial
+    condition = 1;                                                          % set the condition # to 1
 elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end) % If the last trial is a success
-    condition_sequence = setdiff(condition_sequence, prev_conditions);      % remove the previously presented conditions from the sequence
-    condition = mod(condition+2, imageL)+1;                                 % increment the condition # by 3
+    stimList = setdiff(stimList, stimPrev);                                 % remove the previously presented conditions from the sequence
+    condition = mod(condition+2, length(imageNum))+1;                       % increment the condition # by 3
 end
 
 % Initialize the conditions for a new block
-if isempty(condition_sequence)
-    condition_sequence = 1:imageL;
-    condition_sequence = setdiff(condition_sequence, borrow_conditions);
-    borrow_conditions = [];
-    block = block + 1;
+if isempty(stimList)                                            % If there are no stimuli left in the block
+    stimList = setdiff(imageNum, stimBorrow);
+    stimBorrow = [];
+    block=block+1;
+    if block==3; TrialRecord.Pause = true; end
 end
 
-if length(condition_sequence)>=3                                            % If more than 2 conditions left in the sequence
-    condition_indices = datasample(condition_sequence, 3, 'Replace',false); % randomly sample 3 condtions from the sequence
-    prev_conditions = condition_indices;                                    
-    TrialRecord.User.Stimuli = condition_indices;                           % save the conditions in user variable
+if length(stimList)>=3                                          % If more than 2 conditions left in the sequence
+    stimCurrent = datasample(stimList, 3, 'Replace',false);     % randomly sample 3 condtions from the sequence
+    stimPrev = stimCurrent;                                    
 else
-    prev_conditions = condition_sequence;
-    borrow_conditions = datasample(1:imageL, 3-length(condition_sequence), 'Replace', false);
-    condition_indices = [condition_sequence borrow_conditions];
-    condition_indices = condition_indices(randperm(3));
-    TrialRecord.User.Stimuli = condition_indices;
+    stimPrev = stimList;
+    stimBorrow = datasample(imageNum, 3-length(stimList), 'Replace', false);
+    stimCurrent = [stimList stimBorrow];
+    stimCurrent = stimCurrent(randperm(3));
 end
 
 % Set the stimuli
-stimuli1 = fullfile('Images', image_list{condition_indices(1)});
-stimuli2 = fullfile('Images', image_list{condition_indices(2)});
-stimuli3 = fullfile('Images', image_list{condition_indices(3)});
+stim1 = fullfile('Images', imageList{stimCurrent(1)});
+stim2 = fullfile('Images', imageList{stimCurrent(2)});
+stim3 = fullfile('Images', imageList{stimCurrent(3)});
 
 C = { 'fix(0,0)', ...
-    sprintf('pic(%s,0,0)',stimuli1), ...
-    sprintf('pic(%s,0,0)',stimuli2), ...
-    sprintf('pic(%s,0,0)',stimuli3)};
+    sprintf('pic(%s,0,0)',stim1), ...
+    sprintf('pic(%s,0,0)',stim2), ...
+    sprintf('pic(%s,0,0)',stim3)};
 
+TrialRecord.User.Stimuli = stimCurrent;                     % save the stimuli for the next trial in user variable
 % Set the block number and the condition number of the next trial
 TrialRecord.NextBlock = block;
 TrialRecord.NextCondition = condition;
