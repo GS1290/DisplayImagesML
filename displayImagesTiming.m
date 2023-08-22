@@ -9,7 +9,7 @@ if exist('eye_','var'), tracker = eye_;     % detect an available tracker
 else, error('This task requires eye input. Please set it up or turn on the simulation mode.');
 end
 
-% Mapping to the TaskObjects defined in the conditions file
+% Mapping to the TaskObjects defined in the userloop
 fixation_point = 1;
 stim1 = 2;
 stim2 = 3;
@@ -17,7 +17,7 @@ stim3 = 4;
 
 % time intervals (in ms):
 wait_for_fix = 1000;
-initial_fix = 1000;
+hold_fix = 1000;
 stimulus_duration = 800;
 isi_duration = 700;
 pulse_duration = 50;
@@ -29,12 +29,12 @@ hold_radius = fix_radius ;
 % creating Scenes
 % Adapter to play audio at the start of the trial
 sndTrialStart = AudioSound(null_);
-sndTrialStart.List = 'trialStart.wav';      % wav file
+sndTrialStart.List = 'Audio\trialStart.wav';      % wav file
 sndTrialStart.PlayPosition = 0;             % play from 0 sec
 
 % Adapter to play audio when the fixation is acquired
 sndAquireStart = AudioSound(null_);
-sndAquireStart.List = 'acquireStart.wav';   % wav file
+sndAquireStart.List = 'Audio\acquireStart.wav';   % wav file
 sndAquireStart.PlayPosition = 0;            % play from 0 sec
 
 % sceneFix: wait for fixation
@@ -57,7 +57,7 @@ fix2.Target = fixation_point;   % Set fixation point as the target
 fix2.Threshold = fix_radius;    % Examines if the gaze is in the Threshold window around the Target.
 wth2 = WaitThenHold(fix2);      %
 wth2.WaitTime = 0;              % 
-wth2.HoldTime = initial_fix;    %
+wth2.HoldTime = hold_fix;    %
 con2 = Concurrent(wth2);
 con2.add(sndAquireStart);
 

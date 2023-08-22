@@ -1,7 +1,7 @@
 function [C,timingfile,userdefined_trialholder] = displayImagesUserloop(MLConfig,TrialRecord)
 % Userloop returns below three variables each trial to the timing script
 C = [];                 % default return value
-timingfile = 'DisplayImagesTiming.m';
+timingfile = 'displayImagesTiming.m';
 userdefined_trialholder = '';
 
 % Load the image stimuli and return timing file if it the very first call
@@ -39,7 +39,6 @@ if isempty(stimList)                                            % If there are n
     stimList = setdiff(imageNum, stimBorrow);
     stimBorrow = [];
     block=block+1;
-    if block==3; TrialRecord.Pause = true; end
 end
 
 if length(stimList)>=3                                          % If more than 2 conditions left in the sequence

@@ -6,8 +6,8 @@ function alert_function(hook,MLConfig,TrialRecord)
 % To make sure this works, in the task window, Alert should be ON
 
 persistent id id2
-filenameCorrect = 'Correct.wav';  % change the filename appropriately
-fileNameIncorrect = 'NotCorrect.wav';
+filenameCorrect = 'Audio\Correct.wav';  % change the filename appropriately
+fileNameIncorrect = 'Audio\NotCorrect.wav';
 
 switch hook
     case 'trial_end'
