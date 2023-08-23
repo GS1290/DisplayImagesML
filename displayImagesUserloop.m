@@ -1,6 +1,7 @@
 function [C,timingfile,userdefined_trialholder] = displayImagesUserloop(MLConfig,TrialRecord)
-% Userloop returns below three variables each trial to the timing script
-C = [];                 % default return value
+
+% default return value
+C = [];
 timingfile = 'displayImagesTiming.m';
 userdefined_trialholder = '';
 
@@ -8,13 +9,16 @@ userdefined_trialholder = '';
 persistent timing_filename_returned
 persistent imageList
 persistent imageNum
+persistent stimList                 % List of stimuli left to display in a block
+persistent stimPrev                 % List of stimuli of the current block displayed in the prev trial
+persistent stimBorrow               % List of stimuli of the next block displayed in the prev trial
 if isempty(timing_filename_returned)
-    imageDir = dir('Images');                                       % stimuli are kept in "Images/"
-    filename = {imageDir.name};
-    imageList = filename(contains(filename, '.tif'));
-    imageNum = cellfun(@(x) sscanf(x, 'Image%d.tif'), imageList);
-    [imageNum, idxOrder] = sort(imageNum);
-    imageList = imageList(idxOrder);
+    imageDir = dir('Images');                                       % get the folder content of "Images/"
+    filename = {imageDir.name};                                     % get the filenames in "Images/"
+    imageList = filename(contains(filename, '.tif'));               % select only tif files (the list not sorted by the image number order)
+    imageNum = cellfun(@(x) sscanf(x, 'Image%d.tif'), imageList);   % get the image number
+    [imageNum, idxOrder] = sort(imageNum);                          % sort the image number list
+    imageList = imageList(idxOrder);                                % sort the image list
     timing_filename_returned = true;
     return
 end
@@ -23,26 +27,22 @@ end
 block = TrialRecord.CurrentBlock;
 condition = TrialRecord.CurrentCondition;
 
-persistent stimList
-persistent stimPrev
-persistent stimBorrow
-
 if isempty(TrialRecord.TrialErrors)                                         % If its the first trial
     condition = 1;                                                          % set the condition # to 1
 elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end) % If the last trial is a success
-    stimList = setdiff(stimList, stimPrev);                                 % remove the previously presented conditions from the sequence
+    stimList = setdiff(stimList, stimPrev);                                 % remove previous trial stimuli from the list of stimuli
     condition = mod(condition+2, length(imageNum))+1;                       % increment the condition # by 3
 end
 
 % Initialize the conditions for a new block
 if isempty(stimList)                                            % If there are no stimuli left in the block
-    stimList = setdiff(imageNum, stimBorrow);
+    stimList = setdiff(imageNum, stimBorrow);                   % 
     stimBorrow = [];
     block=block+1;
 end
 
-if length(stimList)>=3                                          % If more than 2 conditions left in the sequence
-    stimCurrent = datasample(stimList, 3, 'Replace',false);     % randomly sample 3 condtions from the sequence
+if length(stimList)>=3                                          % If more than 2 stimuli left in the current block
+    stimCurrent = datasample(stimList, 3, 'Replace',false);     % randomly sample 3 stimuli from the list
     stimPrev = stimCurrent;                                    
 else
     stimPrev = stimList;

@@ -43,7 +43,7 @@ fix1.Target = fixation_point;   % Set fixation point as the target
 fix1.Threshold = fix_radius;    % Examines if the gaze is in the Threshold window around the Target.
 wth1 = WaitThenHold(fix1);      % 
 wth1.WaitTime = wait_for_fix;   % 
-wth1.HoldTime = 0;              %
+wth1.HoldTime = 1;              %
 wth1.AllowEarlyFix = false;     % End the scene if the monkey is fixating before the scene starts
 con1 = Concurrent(wth1);        %
 con1.add(sndTrialStart);        % Start the trial and concurrently play the trialStart audio
@@ -57,7 +57,7 @@ fix2.Target = fixation_point;   % Set fixation point as the target
 fix2.Threshold = fix_radius;    % Examines if the gaze is in the Threshold window around the Target.
 wth2 = WaitThenHold(fix2);      %
 wth2.WaitTime = 0;              % 
-wth2.HoldTime = hold_fix;    %
+wth2.HoldTime = hold_fix;
 con2 = Concurrent(wth2);
 con2.add(sndAquireStart);
 
