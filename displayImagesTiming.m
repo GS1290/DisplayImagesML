@@ -1,8 +1,7 @@
-% displayImagesTiming file
-hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);');  % stop the task immediately if x is pressed
-set_bgcolor([0.5 0.5 0.5]);                                                 % sets subject screen background color to Gray
-editable('pulse_duration','fix_radius');                                    % adds the variables on the Control screen to make on-the-fly changes
-bhv_variable('Stimuli', TrialRecord.User.Stimuli);                          % Save the current stimuli in data.UserVars variable
+% DisplayImagesTiming file
+hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);');  % Stop the task immediately if "x" key is pressed
+set_bgcolor([0.5 0.5 0.5]);                                                 % Sets subject screen background color to Gray
+bhv_variable('Stimuli', TrialRecord.User.Stimuli);                          % Save the current trial stimuli in data.UserVars variable
 
 % Initializing task variables
 if exist('eye_','var'), tracker = eye_;     % detect an available tracker
@@ -10,10 +9,9 @@ else, error('This task requires eye input. Please set it up or turn on the simul
 end
 
 % Mapping to the TaskObjects defined in the userloop
-fixation_point = 1;
-stim1 = 2;
-stim2 = 3;
-stim3 = 4;
+stim1 = 1;
+stim2 = 2;
+stim3 = 3;
 
 % time intervals (in ms):
 wait_for_fix = 1000;
@@ -22,67 +20,81 @@ stimulus_duration = 800;
 isi_duration = 700;
 pulse_duration = 50;
 
-% fixation window (in degrees):
-fix_radius = [3 3];
-hold_radius = fix_radius ;
+% fixation point parameters:
+fix_size = 0.2;             % circle diameter (in degrees)
+fix_color = [1 1 1];        % [R G B] values between 0 and 1
+fix_window = [3 3];         % rectangle with side angles (in degrees)
+hold_window = fix_window ;  
 
-% creating Scenes
+% Add variables on the Control screen to make on-the-fly changes
+editable('pulse_duration','fix_window','fix_size');
+editable('-color', 'fix_color');
+
+% creating useful adapters
+% Graphic adapter for fixation point
+fixation_point = CircleGraphic(null_);
+fixation_point.EdgeColor = fix_color;
+fixation_point.FaceColor = fix_color;
+fixation_point.Size = fix_size;
+fixation_point.Position = [0 0];
+fixation_point.Zorder = 1;
+
 % Adapter to play audio at the start of the trial
 sndTrialStart = AudioSound(null_);
-sndTrialStart.List = 'Audio\trialStart.wav';      % wav file
-sndTrialStart.PlayPosition = 0;             % play from 0 sec
+sndTrialStart.List = 'Audio\trialStart.wav';    % path to the audio file
+sndTrialStart.PlayPosition = 0;                 % play from 0 sec
 
 % Adapter to play audio when the fixation is acquired
 sndAquireStart = AudioSound(null_);
-sndAquireStart.List = 'Audio\acquireStart.wav';   % wav file
-sndAquireStart.PlayPosition = 0;            % play from 0 sec
+sndAquireStart.List = 'Audio\acquireStart.wav'; % path to the audio file
+sndAquireStart.PlayPosition = 0;                % play from 0 sec
 
+% creating Scenes
 % sceneFix: wait for fixation
-fix1 = SingleTarget(tracker);   % We use eye signals (eye_) for tracking. The SingleTarget adapter
-fix1.Target = fixation_point;   % Set fixation point as the target
-fix1.Threshold = fix_radius;    % Examines if the gaze is in the Threshold window around the Target.
+fix1 = SingleTarget(tracker);   % we use eye signals (eye_) for tracking
+fix1.Target = fixation_point;   % set fixation point as the target
+fix1.Threshold = fix_window;    % Examines if the gaze is in the Threshold window around the Target.
 wth1 = WaitThenHold(fix1);      % 
 wth1.WaitTime = wait_for_fix;   % 
-wth1.HoldTime = 1;              %
+wth1.HoldTime = 1;              % Supposed to be 0, but if kept 0 ML thinks the subject didn't hold fixation and WTH adapter's success condition doesn't become true
 wth1.AllowEarlyFix = false;     % End the scene if the monkey is fixating before the scene starts
 con1 = Concurrent(wth1);        %
 con1.add(sndTrialStart);        % Start the trial and concurrently play the trialStart audio
 
-sceneFix = create_scene(con1,fixation_point);   % In this scene, we will present the fixation_point (TaskObject #1)
-                                                % and wait for fixation.
+sceneFix = create_scene(con1);   % In this scene, we will present the fixation_point and wait for fixation.
 
 % sceneHold: hold fixation
-fix2 = SingleTarget(tracker);   % We use eye signals (eye_) for tracking. The SingleTarget adapter
+fix2 = SingleTarget(tracker);   % We use eye signals (eye_) for tracking
 fix2.Target = fixation_point;   % Set fixation point as the target
-fix2.Threshold = fix_radius;    % Examines if the gaze is in the Threshold window around the Target.
+fix2.Threshold = fix_window;    % Examines if the gaze is in the Threshold window around the Target.
 wth2 = WaitThenHold(fix2);      %
-wth2.WaitTime = 0;              % 
+wth2.WaitTime = 0;              % We already know the fixation is acquired, so we don't wait.
 wth2.HoldTime = hold_fix;
 con2 = Concurrent(wth2);
 con2.add(sndAquireStart);
 
-sceneHold = create_scene(con2,fixation_point);  % In this scene, we will present the fixation_point (TaskObject #1) and hold fixation for 1000ms.
+sceneHold = create_scene(con2);  % In this scene, we will present the fixation_point and hold fixation for 1000ms.
 
 % sceneStim: present stimulus
 fix3 = SingleTarget(tracker);
 fix3.Target = fixation_point;
-fix3.Threshold = hold_radius;
+fix3.Threshold = hold_window;
 wth3 = WaitThenHold(fix3);
-wth3.WaitTime = 0;                              % We already knows the fixation is acquired, so we don't wait.
+wth3.WaitTime = 0;               % We already know the fixation is acquired, so we don't wait.
 wth3.HoldTime = stimulus_duration;
 
-sceneStim1 = create_scene(wth3,[fixation_point stim1]); % present stimulus 1
-sceneStim2 = create_scene(wth3,[fixation_point stim2]); % present stimulus 2
-sceneStim3 = create_scene(wth3,[fixation_point stim3]); % present stimulus 3
+sceneStim1 = create_scene(wth3, stim1); % present stimulus 1
+sceneStim2 = create_scene(wth3, stim2); % present stimulus 2
+sceneStim3 = create_scene(wth3, stim3); % present stimulus 3
 
 % sceneISI: hold fixation until next stimulus
 fix4 = SingleTarget(tracker);
 fix4.Target = fixation_point;
-fix4.Threshold = hold_radius;
+fix4.Threshold = hold_window;
 wth4 = WaitThenHold(fix4);
 wth4.WaitTime = 0;
 wth4.HoldTime = isi_duration;
-sceneISI = create_scene(wth4, fixation_point);
+sceneISI = create_scene(wth4);
 
 % TASK:
 error_type = 0;
@@ -110,7 +122,7 @@ while true
     if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
     
     idle(0);                                        % Clear screens
-    goodmonkey(pulse_duration, 'juiceline',1, 'numreward',1, 'pausetime',0, 'eventmarker',50);   % used-defined amount of juice
+    goodmonkey(pulse_duration, 'juiceline',1, 'numreward',1, 'pausetime',0, 'eventmarker',50);   % Successful trial, give reward
     break
 end
 

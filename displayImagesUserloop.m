@@ -6,6 +6,7 @@ timingfile = 'displayImagesTiming.m';
 userdefined_trialholder = '';
 
 % Load the image stimuli and return timing file if it the very first call
+stim_per_trial = 3;
 persistent timing_filename_returned
 persistent imageList
 persistent imageNum
@@ -15,7 +16,7 @@ persistent stimBorrow               % List of stimuli of the next block displaye
 if isempty(timing_filename_returned)
     imageDir = dir('Images');                                       % get the folder content of "Images/"
     filename = {imageDir.name};                                     % get the filenames in "Images/"
-    imageList = filename(contains(filename, '.tif'));               % select only tif files (the list not sorted by the image number order)
+    imageList = filename(contains(filename, '.tif'));               % select only tif files (the list is not sorted by the image number order)
     imageNum = cellfun(@(x) sscanf(x, 'Image%d.tif'), imageList);   % get the image number
     [imageNum, idxOrder] = sort(imageNum);                          % sort the image number list
     imageList = imageList(idxOrder);                                % sort the image list
@@ -31,7 +32,7 @@ if isempty(TrialRecord.TrialErrors)                                         % If
     condition = 1;                                                          % set the condition # to 1
 elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end) % If the last trial is a success
     stimList = setdiff(stimList, stimPrev);                                 % remove previous trial stimuli from the list of stimuli
-    condition = mod(condition+2, length(imageNum))+1;                       % increment the condition # by 3
+    condition = mod(condition+stim_per_trial-1, length(imageNum))+1;        % increment the condition # by stim_per_trial
 end
 
 % Initialize the conditions for a new block
@@ -41,14 +42,14 @@ if isempty(stimList)                                            % If there are n
     block=block+1;
 end
 
-if length(stimList)>=3                                          % If more than 2 stimuli left in the current block
-    stimCurrent = datasample(stimList, 3, 'Replace',false);     % randomly sample 3 stimuli from the list
+if length(stimList)>=stim_per_trial                                         % If more than 2 stimuli left in the current block
+    stimCurrent = datasample(stimList, stim_per_trial, 'Replace',false);    % randomly sample 3 stimuli from the list
     stimPrev = stimCurrent;                                    
 else
     stimPrev = stimList;
-    stimBorrow = datasample(imageNum, 3-length(stimList), 'Replace', false);
+    stimBorrow = datasample(imageNum, stim_per_trial-length(stimList), 'Replace', false);
     stimCurrent = [stimList stimBorrow];
-    stimCurrent = stimCurrent(randperm(3));
+    stimCurrent = stimCurrent(randperm(stim_per_trial));
 end
 
 % Set the stimuli
@@ -56,8 +57,7 @@ stim1 = fullfile('Images', imageList{stimCurrent(1)});
 stim2 = fullfile('Images', imageList{stimCurrent(2)});
 stim3 = fullfile('Images', imageList{stimCurrent(3)});
 
-C = { 'fix(0,0)', ...
-    sprintf('pic(%s,0,0)',stim1), ...
+C = {sprintf('pic(%s,0,0)',stim1), ...
     sprintf('pic(%s,0,0)',stim2), ...
     sprintf('pic(%s,0,0)',stim3)};
 
