@@ -6,7 +6,6 @@ timingfile = 'displayImagesTiming.m';
 userdefined_trialholder = '';
 
 % Load the image stimuli and return timing file if it the very first call
-stim_per_trial = 3;
 persistent timing_filename_returned
 persistent imageList
 persistent imageNum
@@ -16,14 +15,15 @@ persistent stimBorrow               % List of stimuli of the next block displaye
 if isempty(timing_filename_returned)
     imageDir = dir('Images');                                       % get the folder content of "Images/"
     filename = {imageDir.name};                                     % get the filenames in "Images/"
-    imageList = filename(contains(filename, '.tif'));               % select only tif files (the list is not sorted by the image number order)
-    imageNum = cellfun(@(x) sscanf(x, 'Image%d.tif'), imageList);   % get the image number
+    imageList = filename(contains(filename, '.png'));               % select only tif files (the list is not sorted by the image number order)
+    imageNum = cellfun(@(x) sscanf(x, 'Image%d.png'), imageList);   % get the image number
     [imageNum, idxOrder] = sort(imageNum);                          % sort the image number list
     imageList = imageList(idxOrder);                                % sort the image list
     timing_filename_returned = true;
     return
 end
 
+stim_per_trial = TrialRecord.Editable.stim_per_trial;
 % get current block and current condition
 block = TrialRecord.CurrentBlock;
 condition = TrialRecord.CurrentCondition;
@@ -53,13 +53,15 @@ else
 end
 
 % Set the stimuli
-stim1 = fullfile('Images', imageList{stimCurrent(1)});
-stim2 = fullfile('Images', imageList{stimCurrent(2)});
-stim3 = fullfile('Images', imageList{stimCurrent(3)});
+stim = cell(1,stim_per_trial);
+for i=1:stim_per_trial
+    stim{i} = fullfile('Images', imageList{stimCurrent(i)});
+end
 
-C = {sprintf('pic(%s,0,0)',stim1), ...
-    sprintf('pic(%s,0,0)',stim2), ...
-    sprintf('pic(%s,0,0)',stim3)};
+C = cell(1,stim_per_trial);
+for i=1:stim_per_trial
+    C{i} = sprintf('pic(%s,0,0)',stim{i});
+end
 
 TrialRecord.User.Stimuli = stimCurrent;                     % save the stimuli for the next trial in user variable
 % Set the block number and the condition number of the next trial

@@ -9,9 +9,8 @@ else, error('This task requires eye input. Please set it up or turn on the simul
 end
 
 % Mapping to the TaskObjects defined in the userloop
-stim1 = 1;
-stim2 = 2;
-stim3 = 3;
+stim_per_trial = 3;
+stim = 1:stim_per_trial;
 
 % time intervals (in ms):
 wait_for_fix = 1000;
@@ -29,6 +28,7 @@ hold_window = fix_window ;
 % Add variables on the Control screen to make on-the-fly changes
 editable('pulse_duration','fix_window','fix_size');
 editable('-color', 'fix_color');
+editable('stim_per_trial','wait_for_fix','hold_fix','stimulus_duration','isi_duration');
 
 % creating useful adapters
 % Graphic adapter for fixation point
@@ -57,7 +57,7 @@ fix1.Threshold = fix_window;    % Examines if the gaze is in the Threshold windo
 wth1 = WaitThenHold(fix1);      % 
 wth1.WaitTime = wait_for_fix;   % 
 wth1.HoldTime = 1;              % Supposed to be 0, but if kept 0 ML thinks the subject didn't hold fixation and WTH adapter's success condition doesn't become true
-wth1.AllowEarlyFix = false;     % End the scene if the monkey is fixating before the scene starts
+wth1.AllowEarlyFix = true;     % End the scene if the monkey is fixating before the scene starts
 con1 = Concurrent(wth1);        %
 con1.add(sndTrialStart);        % Start the trial and concurrently play the trialStart audio
 
@@ -83,9 +83,10 @@ wth3 = WaitThenHold(fix3);
 wth3.WaitTime = 0;               % We already know the fixation is acquired, so we don't wait.
 wth3.HoldTime = stimulus_duration;
 
-sceneStim1 = create_scene(wth3, stim1); % present stimulus 1
-sceneStim2 = create_scene(wth3, stim2); % present stimulus 2
-sceneStim3 = create_scene(wth3, stim3); % present stimulus 3
+sceneStim = cell(1,stim_per_trial);
+for i=1:stim_per_trial
+    sceneStim{i} = create_scene(wth3, stim(i)); % present stimulus i
+end
 
 % sceneISI: hold fixation until next stimulus
 fix4 = SingleTarget(tracker);
@@ -105,20 +106,20 @@ while true
     
     run_scene(sceneHold,10);
     if ~wth2.Success; error_type = 3; break; end    % If the WithThenHold failed (fixation is broken), this is a "break fixation (3)" error.
-    
-    run_scene(sceneStim1,20);                       % Run the scene for presenting 1st stimulus (eventmarker 20)
-    if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
-    
-    run_scene(sceneISI,10);
-    if ~wth4.Success; error_type = 3; break; end
-    
-    run_scene(sceneStim2,20);                       % Run the scene for presenting 2nd stimulus (eventmarker 20)
-    if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
-    
-    run_scene(sceneISI,10);
-    if ~wth4.Success; error_type = 3; break; end
-    
-    run_scene(sceneStim3,20);                       % Run the scene for presenting 3rd stimulus (eventmarker 20)
+
+    for i=1:stim_per_trial-1
+        run_scene(sceneStim{i},20);                     % Run the scene for presenting i'th stimulus (eventmarker 20)
+        if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+        
+        if isi_duration ~= 0
+            run_scene(sceneISI,10);
+            if ~wth4.Success; error_type = 3; break; end
+        else
+            eventmarker(10);
+        end
+    end
+
+    run_scene(sceneStim{stim_per_trial},20);                       % Run the scene for presenting last stimulus (eventmarker 20)
     if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
     
     idle(0);                                        % Clear screens
