@@ -12,6 +12,7 @@ persistent imageNum
 persistent stimList                 % List of stimuli left to display in a block
 persistent stimPrev                 % List of stimuli of the current block displayed in the prev trial
 persistent stimBorrow               % List of stimuli of the next block displayed in the prev trial
+persistent blockSum
 if isempty(timing_filename_returned)
     imageDir = dir('Images');                                       % get the folder content of "Images/"
     filename = {imageDir.name};                                     % get the filenames in "Images/"
@@ -38,17 +39,24 @@ end
 % Initialize the conditions for a new block
 if isempty(stimList)                                            % If there are no stimuli left in the block
     stimList = setdiff(imageNum, stimBorrow);                   % 
+    block=block+blockSum+1;
     stimBorrow = [];
-    block=block+1;
+    blockSum = 0;
 end
 
 if length(stimList)>=stim_per_trial                                         % If more than 2 stimuli left in the current block
     stimCurrent = datasample(stimList, stim_per_trial, 'Replace',false);    % randomly sample 3 stimuli from the list
-    stimPrev = stimCurrent;                                    
-else
+    stimPrev = stimCurrent;
+elseif length(stimList)+length(imageNum)>stim_per_trial
     stimPrev = stimList;
     stimBorrow = datasample(imageNum, stim_per_trial-length(stimList), 'Replace', false);
     stimCurrent = [stimList stimBorrow];
+    stimCurrent = stimCurrent(randperm(stim_per_trial));
+else
+    stimPrev = stimList;
+    blockSum = floor((stim_per_trial - length(stimList))/length(imageNum));
+    stimBorrow = datasample(imageNum, stim_per_trial-length(stimList)-blockSum*length(imageNum), 'Replace', false);
+    stimCurrent = [stimList repmat(imageNum,1,blockSum) stimBorrow];
     stimCurrent = stimCurrent(randperm(stim_per_trial));
 end
 
